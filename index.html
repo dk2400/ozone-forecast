@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ozone Pollution Forecast for Environmental Justice Communities in Washington DC Metro Area</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f4f0; color: #1a1a1a; padding: 2rem 1rem; }
+  h1 { font-size: 1.5rem; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { font-size: 0.85rem; color: #666; margin-bottom: 1.5rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 1.5rem; }
+  .card { background: white; border-radius: 12px; padding: 14px; border: 1px solid #e8e8e5; }
+  .swatch { width: 100%; aspect-ratio: 3/1; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: flex-end; padding: 8px; }
+  .swatch-label { font-size: 11px; font-weight: 600; }
+  .community { font-size: 15px; font-weight: 500; margin-bottom: 2px; }
+  .location { font-size: 12px; color: #888; }
+  .legend { background: white; border-radius: 10px; padding: 14px; border: 1px solid #e8e8e5; margin-bottom: 1.5rem; }
+  .legend h3 { font-size: 12px; font-weight: 500; color: #888; margin-bottom: 10px; }
+  .legend-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #555; }
+  .dot { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+  .footer { font-size: 14px; color: #FF0000; text-align: center; margin-top: 1.5rem; }
+  .map-row { display: flex; gap: 14px; margin-bottom: 1.5rem; align-items: stretch; }
+  #map { width: 50%; height: 520px; border-radius: 12px; border: 1px solid #e8e8e5; flex-shrink: 0; }
+  .ej-img { width: 50%; height: 520px; border-radius: 12px; border: 1px solid #e8e8e5; object-fit: contain; background: white; }
+  @media (max-width: 600px) { .map-row { flex-direction: column; } #map { width: 100%; } .ej-img { width: 100%; } }
+</style>
+</head>
+<body>
+
+<script>
+// ============================================================
+//  EDIT ONLY THIS SECTION EACH MORNING
+//  For each site, change the category to one of:
+//  "good" | "moderate" | "usg" | "unhealthy" | "very" | "hazardous"
+// ============================================================
+const DATE = "June 17, 2026";
+
+const FORECAST = [
+  { name: "McMillan",            location: "Washington, DC",           category: "moderate" },
+  { name: "Rockville",           location: "Montgomery Co., MD",       category: "good"     },
+  { name: "Beltsville",          location: "Prince George's Co., MD",  category: "good"     },
+  { name: "Prince George's Equestrian Center",location: "Prince George's Co., MD",  category: "moderate" },
+];
+// ============================================================
+//  STOP EDITING — everything below updates automatically
+// ============================================================
+
+const AQI = {
+  good:      { hex: "#92D050", textColor: "#1a4a00", label: "Good" },
+  moderate:  { hex: "#FFFF00", textColor: "#5a5a00", label: "Moderate" },
+  usg:       { hex: "#FF7E00", textColor: "#4a2000", label: "Unhealthy for sensitive groups" },
+  unhealthy: { hex: "#FF0000", textColor: "#ffffff", label: "Unhealthy" },
+  very:      { hex: "#8F3F97", textColor: "#f0d0f5", label: "Very Unhealthy" },
+  hazardous: { hex: "#7E0023", textColor: "#f5c0c0", label: "Hazardous" },
+};
+
+// Coordinates for each site
+const COORDS = {
+  "McMillan":             [38.921847, -77.013178],
+  "Rockville":            [39.114313, -77.106876],
+  "Beltsville":                        [39.055277, -76.878333],
+  "Prince George's Equestrian Center": [38.811940, -76.744170],
+};
+
+// Render date
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("forecast-date").textContent = DATE;
+
+  // Build color cards
+  const grid = document.getElementById("forecast-grid");
+  FORECAST.forEach(site => {
+    const aqi = AQI[site.category];
+    grid.innerHTML += `
+      <div class="card">
+        <div class="swatch" style="background:${aqi.hex}">
+          <span class="swatch-label" style="color:${aqi.textColor}">${aqi.label}</span>
+        </div>
+        <p class="community">${site.name}</p>
+        <p class="location">${site.location}</p>
+      </div>`;
+  });
+
+  // Build map
+  const map = L.map("map").setView([38.97, -76.98], 9);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  FORECAST.forEach(site => {
+    const aqi = AQI[site.category];
+    const [lat, lng] = COORDS[site.name];
+    const icon = L.divIcon({
+      className: "",
+      html: `<div style="width:28px;height:28px;background:${aqi.hex};border:2px solid rgba(0,0,0,0.25);border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:2px 2px 4px rgba(0,0,0,0.2);"></div>`,
+      iconSize: [28, 28], iconAnchor: [14, 28], popupAnchor: [0, -30]
+    });
+    L.marker([lat, lng], { icon }).addTo(map)
+      .bindPopup(`<strong>${site.name}</strong><br>${site.location}<br>
+        <span style="display:inline-block;margin-top:4px;padding:2px 8px;background:${aqi.hex};border-radius:4px;font-size:12px;border:1px solid rgba(0,0,0,0.15);color:${aqi.textColor}">${aqi.label}</span>`);
+  });
+});
+</script>
+
+<h1>Ozone Pollution Forecast for Environmental Justice Communities in Washington DC Metro Area</h1>
+<p class="subtitle"><span id="forecast-date"></span></p>
+<div class="grid" id="forecast-grid"></div>
+
+<div class="map-row">
+  <div id="map"></div>
+  <img src="EJMap.png" alt="EJ Map" class="ej-img">
+</div>
+
+<div class="legend">
+  <h3>AQI color key</h3>
+  <div class="legend-grid">
+    <div class="legend-item"><div class="dot" style="background:#92D050"></div> Good</div>
+    <div class="legend-item"><div class="dot" style="background:#FFFF00;border:1px solid #ccc"></div> Moderate</div>
+    <div class="legend-item"><div class="dot" style="background:#FF7E00"></div> Unhealthy for sensitive groups</div>
+    <div class="legend-item"><div class="dot" style="background:#FF0000"></div> Unhealthy</div>
+    <div class="legend-item"><div class="dot" style="background:#8F3F97"></div> Very Unhealthy</div>
+    <div class="legend-item"><div class="dot" style="background:#7E0023"></div> Hazardous</div>
+  </div>
+</div>
+
+<p class="footer">Disclaimer — This forecast is an independent research project created by a high school student to raise awareness of air quality conditions in environmental justice communities in the DC Metro Area. It is not an official forecast and has not been reviewed or endorsed by the EPA, DOEE, MDE, DEQ, MWCOG, or any other government agency &nbsp;·&nbsp; For official forecasts visit <a href="https://www.cleanairpartners.net">Clean Air Partners</a></p>
+
+</body>
+</html>

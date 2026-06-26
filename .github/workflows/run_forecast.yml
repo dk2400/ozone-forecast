@@ -1,0 +1,29 @@
+name: Daily Ozone Forecast
+
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests pandas openpyxl joblib scikit-learn numpy PyGithub
+
+      - name: Run forecast pipeline
+        env:
+          AIRNOW_API_KEY: ${{ secrets.AIRNOW_API_KEY }}
+          GITHUB_TOKEN:   ${{ secrets.FORECAST_GITHUB_TOKEN }}
+        run: python run_forecast.py

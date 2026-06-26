@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests pandas openpyxl joblib scikit-learn numpy PyGithub
+          pip install requests pandas openpyxl joblib scikit-learn==1.6.1 numpy PyGithub
 
       - name: Run forecast pipeline
         env:

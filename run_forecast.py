@@ -53,7 +53,7 @@ import numpy as np
 import pandas as pd
 import requests
 import joblib
-from github import Github
+from github import Github, Auth
 
 logging.basicConfig(
     level=logging.INFO,
@@ -301,6 +301,8 @@ def build_site_input(site: dict,
     def get_oz_series(oz_df: pd.DataFrame, label: str) -> np.ndarray:
         """Extract sorted 24-hour ozone array (ppm) for this site; fill gaps if needed."""
         oz = oz_df[oz_df["site_num"] == snum].copy()
+        # Deduplicate — AirNow sometimes returns duplicate rows for the same hour
+        oz = oz.groupby("hour")["ozone_ppm"].mean().reset_index()
         oz = oz.sort_values("hour").reset_index(drop=True)
         if len(oz) < 24:
             log.warning(
@@ -470,7 +472,7 @@ def update_index_html(html: str, today: date,
 # ============================================================
 def push_to_github(new_html: str):
     log.info("Pushing updated index.html to GitHub …")
-    g    = Github(GITHUB_TOKEN)
+    g    = Github(auth=Auth.Token(GITHUB_TOKEN))
     repo = g.get_repo(GITHUB_REPO)
     file = repo.get_contents(INDEX_HTML_PATH)
     repo.update_file(
@@ -536,7 +538,7 @@ def main():
     # Step 5 — Fetch current index.html from GitHub
     log.info("Fetching index.html from GitHub …")
     try:
-        g    = Github(GITHUB_TOKEN)
+        g    = Github(auth=Auth.Token(GITHUB_TOKEN))
         repo = g.get_repo(GITHUB_REPO)
         file = repo.get_contents(INDEX_HTML_PATH)
         html = file.decoded_content.decode("utf-8")

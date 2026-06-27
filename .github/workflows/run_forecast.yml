@@ -1,11 +1,12 @@
 name: Daily Ozone Forecast
-
 on:
+  push:
   schedule:
-    #- cron: "0 10 * * *"   # 6:00 AM Eastern during EDT
     - cron: "*/5 * * * *"
   workflow_dispatch:
-
+#on:
+  #schedule:
+    #- cron: "0 10 * * *"   # 6:00 AM Eastern during EDT
 permissions:
   contents: write
 
